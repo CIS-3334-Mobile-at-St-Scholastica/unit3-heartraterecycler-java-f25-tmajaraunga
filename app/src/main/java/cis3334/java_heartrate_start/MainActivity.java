@@ -10,6 +10,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import cis3334.java_heartrate_start.Heartrate;
+import cis3334.java_heartrate_start.MainViewModel;
+
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -37,16 +40,34 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupLiveDataObserver() {
-        // Create the observer for the list of heart rates
-        mainViewModel.getAllHeartrates().observe(this, new Observer<List<Heartrate>>() {
-            @Override
-            public void onChanged(@Nullable List<Heartrate> allHeartrates) {
-                Log.d("CIS 3334", "MainActivity -- LiveData Observer -- Number of Pizzas = "+allHeartrates.size());
-                editTextDisplay.setText("Number of heartrates = "+allHeartrates.size());
-                // TODO: update the RecycleView Array Adapter
+        Log.d("CIS 3334", "MainActivity: setupLiveDataObserver started");
+        // Assuming mainViewModel.getAllHeartrates() returns LiveData<List<Heartrate>>
+        if (mainViewModel.getAllHeartrates() == null) {
+            Log.e("CIS 3334", "MainActivity: mainViewModel.getAllHeartrates() returned NULL!");
+            return;
+        }
+
+        mainViewModel.getAllHeartrates().observe(this, allHeartrates -> {
+            Log.d("CIS 3334", "MainActivity: LiveData observer triggered for allHeartrates.");
+            if (allHeartrates != null) {
+                Log.d("CIS 3334", "MainActivity: Observed " + allHeartrates.size() + " heartrates.");
+                // Pass the observed allHeartrates to the heartrateAdapter
+                if (heartrateAdapter != null) {
+                    heartrateAdapter.heartrateDataUpdated(allHeartrates); // Call the new method
+                } else {
+                    Log.w("CIS 3334", "MainActivity: heartrateAdapter is null in observer, cannot update.");
+                }
+            } else {
+                Log.w("CIS 3334", "MainActivity: Observed null list for allHeartrates.");
+                // Optionally, clear the adapter or show an empty state
+                if (heartrateAdapter != null) {
+                    heartrateAdapter.heartrateDataUpdated(new ArrayList<>()); // Pass an empty list
+                }
             }
         });
+        Log.d("CIS 3334", "MainActivity: LiveData observer set up.");
     }
+
 
     /**
      *  Set up the Insert Heartrate button so it adds a new heart rate reading to the database
